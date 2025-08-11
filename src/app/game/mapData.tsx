@@ -4,7 +4,7 @@ export const mapData = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 1, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 1, 0, 2, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0],
-  [0, 2, 1, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 2, 1, 0, 2, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0],
+  [0, 2, 1, 0, 2, 0, 0, 2, 0, 0, 0, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 2, 1, 0, 2, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0],
   [0, 2, 1, 0, 2, 2, 2, 2, 2, 2, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 2, 1, 0, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0],
   [0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 2, 0, 0, 2, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 0, 0],
   [0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 2, 2, 0, 0],
@@ -30,14 +30,54 @@ export const tileColors: Record<number, string> = {
   4: "#b22222",
 };
 
-export const tileImagePaths: Record<number, string> = {
-  0: "/tiles/grass-tile.png",
-  1: "/tiles/rock-obstacle-tile.png",
-  2: "/tiles/cobblestone-path-tile.png",
-};
+export interface TileDefinition {
+  id: number;
+  name: string;
+  imagePath: string;
+  walkable: boolean;
+  eventTrigger?: boolean;
+  scale?: number;
+}
 
-export const PLAYER_IMAGE_PATH = "/tiles/character-sprite-image.png";
+export const tileDefinitions: TileDefinition[] = [
+  {
+    id: 0,
+    name: "grass",
+    imagePath: "/tiles/grass-tile-5.png",
+    walkable: true,
+  },
+  {
+    id: 1,
+    name: "rock",
+    imagePath: "/tiles/cobblestone-path-tile.png",
+    walkable: false,
+  },
+  {
+    id: 2,
+    name: "cobblestone",
+    imagePath: "/tiles/water-tile-1.png",
+    walkable: true,
+  },
+  {
+    id: 3,
+    name: "water",
+    imagePath: "/tiles/water-tile-1.png",
+    walkable: true,
+  },
+  {
+    id: 4,
+    name: "wizard-blue-npc",
+    imagePath: "/characters/wizard-blue.png",
+    walkable: false,
+    eventTrigger: true,
+    scale: 1.6,
+  },
+  /*   { id: 3, name: "water", imagePath: "/tiles/water-tile.png", walkable: false, eventTrigger: true },
+  { id: 4, name: "forest", imagePath: "/tiles/forest-tile.png", walkable: true, eventTrigger: true }, */
+];
 
-export const TILE_SIZE = 40;
+export const PLAYER_IMAGE_PATH = "/characters/player-front.png";
+
+export const TILE_SIZE = 32;
 export const MAP_ROWS = mapData.length;
 export const MAP_COLS = mapData[0].length;
