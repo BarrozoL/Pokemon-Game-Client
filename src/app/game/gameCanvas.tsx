@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   mapData,
   tileColors,
-  tileImagePaths,
+  tileDefinitions,
   TILE_SIZE,
   MAP_ROWS,
   MAP_COLS,
@@ -13,17 +13,30 @@ import {
 // type for loaded images
 type LoadedTileImages = Record<number, HTMLImageElement>;
 
+type Direction = "down" | "up" | "left" | "right";
+
+const PLAYER_IMAGE_PATHS: Record<Direction, string> = {
+  down: "/characters/player-front.png",
+  up: "/characters/player-back.png",
+  left: "/characters/player-left.png",
+  right: "/characters/player-right.png",
+};
+
 export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loadedImages, setLoadedImages] = useState<LoadedTileImages | null>(
     null
   );
-  const [playerImage, setPlayerImage] = useState<HTMLImageElement | null>(null);
+
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [playerTile, setPlayerTile] = useState<{ row: number; col: number }>({
     row: 1,
     col: 1,
   });
+  const [dir, setDir] = useState<Direction>("down");
+  const [playerImages, setPlayerImages] = useState<
+    Partial<Record<Direction, HTMLImageElement>>
+  >({});
 
   // defined in mapData
   const tileSize = TILE_SIZE;
@@ -36,57 +49,39 @@ export default function GameCanvas() {
     const imagesToLoad: { [key: number]: HTMLImageElement } = {};
     const promises: Promise<void>[] = [];
 
-    Object.entries(tileImagePaths).forEach(([key, src]) => {
-      const tileType = Number(key);
+    tileDefinitions.forEach((tile) => {
       const img = new Image(); // Creating Image objects *here* (client-side)
-      imagesToLoad[tileType] = img;
+      imagesToLoad[tile.id] = img;
       const promise = new Promise<void>((resolve) => {
         img.onload = () => resolve();
         img.onerror = (err) => {
-          console.error(`Failed to load image: ${src}`, err);
+          console.error(`Failed to load image for tile: ${tile.name}`, err);
           resolve(); // Resolve even on error to allow fallback color, or reject to indicate a loading failure.
         };
-        img.src = src;
+        img.src = tile.imagePath;
       });
       promises.push(promise);
     });
 
     //Loading player image
-    const playerImg = new Image();
-    const playerPromise = new Promise<void>((resolve) => {
-      playerImg.onload = () => resolve();
-      playerImg.onerror = (err) => {
-        console.error(`Failed to load player image: ${PLAYER_IMAGE_PATH}`, err);
-        resolve(); // Resolve even on error
-      };
-      playerImg.src = PLAYER_IMAGE_PATH;
-    });
-    promises.push(playerPromise);
+    const playerImgs: Partial<Record<Direction, HTMLImageElement>> = {};
+    const playerPromises = (Object.keys(PLAYER_IMAGE_PATHS) as Direction[]).map(
+      (d) =>
+        new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = PLAYER_IMAGE_PATHS[d];
+          playerImgs[d] = img;
+        })
+    );
+    promises.push(...playerPromises);
 
-    // Resolve all promises together
-    Promise.all(promises)
-      .then(() => {
-        if (isMounted) {
-          setLoadedImages(imagesToLoad); // Set state when all loaded/failed
-          //Checking if player image is loaded
-          if (playerImg.complete && playerImg.naturalHeight !== 0) {
-            setPlayerImage(playerImg);
-          } else {
-            console.error(
-              "Player image failed to load properly, player will not be rendered as image."
-            );
-            setPlayerImage(null);
-          }
-        }
-      })
-      .catch((error) => {
-        console.error("Error loading tile images:", error);
-        if (isMounted) {
-          // maybe set an error state?
-          setLoadedImages({}); // Set to empty object or handle error state
-          setPlayerImage(null);
-        }
-      });
+    Promise.all(promises).then(() => {
+      if (!isMounted) return;
+      setLoadedImages(imagesToLoad);
+      setPlayerImages(playerImgs);
+    });
 
     return () => {
       isMounted = false; // Cleanup function to prevent setting state after unmount
@@ -107,6 +102,11 @@ export default function GameCanvas() {
     return () => window.removeEventListener("resize", updateCanvasSize);
   }, []);
 
+  //Create a Set of walkable tiles once on mount
+  const WALKABLE = new Set(
+    tileDefinitions.filter((t) => t.walkable).map((t) => t.id)
+  );
+
   // Memoize attemptMove to prevent redefining it on every render
   const attemptMove = useCallback(
     (deltaRow: number, deltaCol: number) => {
@@ -119,10 +119,9 @@ export default function GameCanvas() {
           return pos; // out of map
         }
 
-        // Collision check: 1 or 3 or 4 => blocked tiles (Adjust based on your mapData meaning)
-        const tile = mapData[newRow][newCol];
-        // Make sure tile type 1, 3, 4 are indeed obstacles
-        if (tile === 1 || tile === 3 || tile === 4) {
+        // Collision check
+        const tileId = mapData[newRow][newCol];
+        if (!WALKABLE.has(tileId)) {
           return pos; // blocked
         }
 
@@ -154,6 +153,7 @@ export default function GameCanvas() {
 
     const mapWidth = cols * tileSize;
     const mapHeight = rows * tileSize;
+
     // Center the camera on the player tile
     let cameraX =
       playerTile.col * tileSize - canvasSize.width / 2 + tileSize / 2;
@@ -189,45 +189,59 @@ export default function GameCanvas() {
         }
 
         const tileType = mapData[row][col];
-        const drawX = Math.floor(col * tileSize - cameraX); // Use Math.floor for crisp pixels
-        const drawY = Math.floor(row * tileSize - cameraY); // Use Math.floor for crisp pixels
+
+        // Look up the tile definition to get the scale (default is 1 if not specified)
+        const tileDef = tileDefinitions.find((t) => t.id === tileType);
+        const scale = tileDef?.scale ?? 1;
+        const drawSize = tileSize * scale;
+        // Center the scaled tile within the grid cell
+        const offset = (drawSize - tileSize) / 2;
+        const drawX = Math.floor(col * tileSize - cameraX) - offset;
+        const drawY = Math.floor(row * tileSize - cameraY) - offset;
 
         // Get the loaded image for this tile type
         const tileImg = loadedImages[tileType];
 
-        // Draw image if loaded and complete, otherwise draw fallback color
+        // Draw the tile image with scaling or fallback to a filled rectangle
         if (tileImg && tileImg.complete && tileImg.naturalHeight !== 0) {
-          // Check if image actually loaded
-          ctx.drawImage(tileImg, drawX, drawY, tileSize, tileSize);
+          ctx.drawImage(tileImg, drawX, drawY, drawSize, drawSize);
         } else {
-          ctx.fillStyle = tileColors[tileType] || "#000"; // Fallback color
-          ctx.fillRect(drawX, drawY, tileSize, tileSize);
+          ctx.fillStyle = tileColors[tileType] || "#000";
+          ctx.fillRect(drawX, drawY, drawSize, drawSize);
         }
       }
     }
 
     // Draw Player
+    const img = playerImages[dir];
     const playerScreenX = Math.floor(playerTile.col * tileSize - cameraX);
     const playerScreenY = Math.floor(playerTile.row * tileSize - cameraY);
-    if (
-      playerImage &&
-      playerImage.complete &&
-      playerImage.naturalHeight !== 0
-    ) {
+    const playerWidth = tileSize;
+    const playerHeight = tileSize;
+
+    if (img && img.complete && img.naturalHeight !== 0) {
       ctx.drawImage(
-        playerImage, // The loaded player image
-        playerScreenX, // Position X on canvas
-        playerScreenY, // Position Y on canvas
-        tileSize + 10, // Draw width (same as tile)
-        tileSize + 10 // Draw height (same as tile)
+        img,
+        playerScreenX,
+        playerScreenY,
+        playerWidth,
+        playerHeight
       );
     } else {
       // Fallback
-      console.warn("Player image not available, drawing fallback rectangle.");
-      ctx.fillStyle = "blue"; // Fallback color
+      ctx.fillStyle = "blue";
       ctx.fillRect(playerScreenX, playerScreenY, tileSize, tileSize);
     }
-  }, [loadedImages, playerImage, canvasSize, playerTile, tileSize, rows, cols]);
+  }, [
+    loadedImages,
+    playerImages,
+    dir,
+    canvasSize,
+    playerTile,
+    tileSize,
+    rows,
+    cols,
+  ]);
 
   // Keyboard Input Effect
   useEffect(() => {
@@ -235,18 +249,22 @@ export default function GameCanvas() {
       switch (e.key) {
         case "ArrowUp":
         case "w":
+          setDir("up");
           attemptMove(-1, 0);
           break;
         case "ArrowDown":
         case "s":
+          setDir("down");
           attemptMove(1, 0);
           break;
         case "ArrowLeft":
         case "a":
+          setDir("left");
           attemptMove(0, -1);
           break;
         case "ArrowRight":
         case "d":
+          setDir("right");
           attemptMove(0, 1);
           break;
         default:
