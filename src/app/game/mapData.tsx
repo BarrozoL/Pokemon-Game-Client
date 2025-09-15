@@ -1,6 +1,60 @@
 "use client";
 
-export const mapData = [
+export const TILE_SIZE = 32;
+
+export const tileColors: Record<number, string> = {
+  0: "#6abe30",
+  1: "#4d3827",
+  2: "#c4b28a",
+  3: "#3b6db0",
+  4: "#b75cff",
+};
+
+export interface TileDefinition {
+  id: number;
+  name: string;
+  imagePath: string;
+  walkable: boolean;
+  eventTrigger?: boolean;
+  scale?: number;
+}
+
+export const tileDefinitions: TileDefinition[] = [
+  {
+    id: 0,
+    name: "grass",
+    imagePath: "/tiles/grass-tile-5.png",
+    walkable: true,
+  },
+  {
+    id: 1,
+    name: "boulder",
+    imagePath: "/tiles/rock-obstacle-tile.png",
+    walkable: false,
+  },
+  {
+    id: 2,
+    name: "cobblestone-path",
+    imagePath: "/tiles/cobblestone-path-tile.png",
+    walkable: true,
+  },
+  {
+    id: 3,
+    name: "water",
+    imagePath: "/tiles/water-tile-1.png",
+    walkable: false,
+  },
+  {
+    id: 4,
+    name: "wizard-blue-npc",
+    imagePath: "/characters/wizard-blue.png",
+    walkable: false,
+    eventTrigger: true,
+    scale: 1.6,
+  },
+];
+
+export const levelOneMap: number[][] = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   [0, 0, 1, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 1, 0, 2, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0],
@@ -22,62 +76,60 @@ export const mapData = [
   [0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0],
 ]; //prettier-ignore
 
-export const tileColors: Record<number, string> = {
-  0: "#f173h3",
-  1: "#938173",
-  2: "#cccccc",
-  3: "#708090",
-  4: "#b22222",
-};
+export const levelTwoMap: number[][] = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 0, 0, 0, 3, 3, 3, 3, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+  [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+  [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 2, 2, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+]; //prettier-ignore
 
-export interface TileDefinition {
-  id: number;
+export interface LevelDefinition {
+  id: string;
   name: string;
-  imagePath: string;
-  walkable: boolean;
-  eventTrigger?: boolean;
-  scale?: number;
+  description: string;
+  map: number[][];
+  startingPosition: { row: number; col: number };
 }
 
-export const tileDefinitions: TileDefinition[] = [
+export const levels: LevelDefinition[] = [
   {
-    id: 0,
-    name: "grass",
-    imagePath: "/tiles/grass-tile-5.png",
-    walkable: true,
+    id: "verdant-fields",
+    name: "Verdant Fields",
+    description:
+      "A grassy meadow dotted with cobblestone paths and a mysterious wizard waiting near the grove.",
+    map: levelOneMap,
+    startingPosition: { row: 1, col: 1 },
   },
   {
-    id: 1,
-    name: "rock",
-    imagePath: "/tiles/cobblestone-path-tile.png",
-    walkable: false,
+    id: "azure-approach",
+    name: "Azure Approach",
+    description:
+      "Cross wooden bridges and skirt deep waters to track down the traveling wizard at the shoreline camp.",
+    map: levelTwoMap,
+    startingPosition: { row: 2, col: 2 },
   },
-  {
-    id: 2,
-    name: "cobblestone",
-    imagePath: "/tiles/water-tile-1.png",
-    walkable: true,
-  },
-  {
-    id: 3,
-    name: "water",
-    imagePath: "/tiles/water-tile-1.png",
-    walkable: true,
-  },
-  {
-    id: 4,
-    name: "wizard-blue-npc",
-    imagePath: "/characters/wizard-blue.png",
-    walkable: false,
-    eventTrigger: true,
-    scale: 1.6,
-  },
-  /*   { id: 3, name: "water", imagePath: "/tiles/water-tile.png", walkable: false, eventTrigger: true },
-  { id: 4, name: "forest", imagePath: "/tiles/forest-tile.png", walkable: true, eventTrigger: true }, */
 ];
 
-export const PLAYER_IMAGE_PATH = "/characters/player-front.png";
+export type LevelId = (typeof levels)[number]["id"];
 
-export const TILE_SIZE = 32;
-export const MAP_ROWS = mapData.length;
-export const MAP_COLS = mapData[0].length;
+const defaultLevel = levels[0];
+if (!defaultLevel) {
+  throw new Error("At least one level must be defined.");
+}
+
+export const DEFAULT_LEVEL = defaultLevel;

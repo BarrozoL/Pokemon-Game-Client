@@ -1,13 +1,17 @@
 "use client";
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import {
-  mapData,
   tileColors,
   tileDefinitions,
   TILE_SIZE,
-  MAP_ROWS,
-  MAP_COLS,
-  PLAYER_IMAGE_PATH,
+  DEFAULT_LEVEL,
+  LevelDefinition,
 } from "./mapData";
 
 // type for loaded images
@@ -22,26 +26,40 @@ const PLAYER_IMAGE_PATHS: Record<Direction, string> = {
   right: "/characters/player-right.png",
 };
 
-export default function GameCanvas() {
+interface GameCanvasProps {
+  level?: LevelDefinition;
+}
+
+export default function GameCanvas({ level }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loadedImages, setLoadedImages] = useState<LoadedTileImages | null>(
     null
   );
 
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const [playerTile, setPlayerTile] = useState<{ row: number; col: number }>({
-    row: 1,
-    col: 1,
-  });
+  const activeLevel = level ?? DEFAULT_LEVEL;
+  const mapGrid = activeLevel.map;
+  const tileSize = TILE_SIZE;
+  const rows = mapGrid.length;
+  const cols = mapGrid[0]?.length ?? 0;
+
+  const startingPosition = useMemo(
+    () => ({ ...activeLevel.startingPosition }),
+    [activeLevel]
+  );
+
+  const [playerTile, setPlayerTile] = useState<{ row: number; col: number }>(
+    startingPosition
+  );
   const [dir, setDir] = useState<Direction>("down");
   const [playerImages, setPlayerImages] = useState<
     Partial<Record<Direction, HTMLImageElement>>
   >({});
 
-  // defined in mapData
-  const tileSize = TILE_SIZE;
-  const rows = MAP_ROWS;
-  const cols = MAP_COLS;
+  useEffect(() => {
+    setPlayerTile(startingPosition);
+    setDir("down");
+  }, [startingPosition]);
 
   // Effect for loading images
   useEffect(() => {
@@ -103,8 +121,9 @@ export default function GameCanvas() {
   }, []);
 
   //Create a Set of walkable tiles once on mount
-  const WALKABLE = new Set(
-    tileDefinitions.filter((t) => t.walkable).map((t) => t.id)
+  const WALKABLE = useMemo(
+    () => new Set(tileDefinitions.filter((t) => t.walkable).map((t) => t.id)),
+    []
   );
 
   // Memoize attemptMove to prevent redefining it on every render
@@ -120,7 +139,7 @@ export default function GameCanvas() {
         }
 
         // Collision check
-        const tileId = mapData[newRow][newCol];
+        const tileId = mapGrid[newRow][newCol];
         if (!WALKABLE.has(tileId)) {
           return pos; // blocked
         }
@@ -129,7 +148,7 @@ export default function GameCanvas() {
         return { row: newRow, col: newCol };
       });
     },
-    [rows, cols]
+    [cols, mapGrid, rows, WALKABLE]
   ); // Include dependencies if they were used inside (rows, cols are used)
 
   // Drawing Effect
@@ -139,7 +158,9 @@ export default function GameCanvas() {
       !loadedImages ||
       !canvasRef.current ||
       !canvasSize.width ||
-      !canvasSize.height
+      !canvasSize.height ||
+      !rows ||
+      !cols
     ) {
       return;
     }
@@ -181,14 +202,14 @@ export default function GameCanvas() {
         // Check if the tile is within the map boundaries
         if (
           row < 0 ||
-          row >= mapData.length ||
+          row >= mapGrid.length ||
           col < 0 ||
-          col >= mapData[0].length
+          col >= mapGrid[0].length
         ) {
           continue; // Skip drawing if outside map bounds
         }
 
-        const tileType = mapData[row][col];
+        const tileType = mapGrid[row][col];
 
         // Look up the tile definition to get the scale (default is 1 if not specified)
         const tileDef = tileDefinitions.find((t) => t.id === tileType);
@@ -241,6 +262,7 @@ export default function GameCanvas() {
     tileSize,
     rows,
     cols,
+    mapGrid,
   ]);
 
   // Keyboard Input Effect
