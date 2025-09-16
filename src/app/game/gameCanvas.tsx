@@ -6,13 +6,17 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { useRouter } from "next/navigation";
 import {
   tileColors,
   tileDefinitions,
   TILE_SIZE,
   DEFAULT_LEVEL,
   LevelDefinition,
+  TileDefinition,
+  TileEvent,
 } from "./mapData";
+import { battleEncounters, npcDialogues, DialogueEntry } from "./eventData";
 
 // type for loaded images
 type LoadedTileImages = Record<number, HTMLImageElement>;
@@ -28,10 +32,24 @@ const PLAYER_IMAGE_PATHS: Record<Direction, string> = {
 
 interface GameCanvasProps {
   level?: LevelDefinition;
+  entryPosition?: { row: number; col: number };
+  onLevelChange?: (transition: {
+    targetLevelId: string;
+    spawn?: { row: number; col: number };
+  }) => void;
+  onDialogue?: (dialogue: DialogueEntry) => void;
+  isInputDisabled?: boolean;
 }
 
-export default function GameCanvas({ level }: GameCanvasProps) {
+export default function GameCanvas({
+  level,
+  entryPosition,
+  onLevelChange,
+  onDialogue,
+  isInputDisabled = false,
+}: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const router = useRouter();
   const [loadedImages, setLoadedImages] = useState<LoadedTileImages | null>(
     null
   );
@@ -48,8 +66,13 @@ export default function GameCanvas({ level }: GameCanvasProps) {
     [activeLevel]
   );
 
+  const effectiveEntry = useMemo(
+    () => entryPosition ?? startingPosition,
+    [entryPosition, startingPosition]
+  );
+
   const [playerTile, setPlayerTile] = useState<{ row: number; col: number }>(
-    startingPosition
+    () => ({ ...effectiveEntry })
   );
   const [dir, setDir] = useState<Direction>("down");
   const [playerImages, setPlayerImages] = useState<
@@ -57,9 +80,9 @@ export default function GameCanvas({ level }: GameCanvasProps) {
   >({});
 
   useEffect(() => {
-    setPlayerTile(startingPosition);
+    setPlayerTile({ row: effectiveEntry.row, col: effectiveEntry.col });
     setDir("down");
-  }, [startingPosition]);
+  }, [effectiveEntry.row, effectiveEntry.col]);
 
   // Effect for loading images
   useEffect(() => {
@@ -74,7 +97,7 @@ export default function GameCanvas({ level }: GameCanvasProps) {
         img.onload = () => resolve();
         img.onerror = (err) => {
           console.error(`Failed to load image for tile: ${tile.name}`, err);
-          resolve(); // Resolve even on error to allow fallback color, or reject to indicate a loading failure.
+          resolve();
         };
         img.src = tile.imagePath;
       });
@@ -109,10 +132,9 @@ export default function GameCanvas({ level }: GameCanvasProps) {
   // Effect for setting initial canvas size and handling resize
   useEffect(() => {
     function updateCanvasSize() {
-      // Consider basing size on viewport or container if needed
       setCanvasSize({
-        width: 800, // Or window.innerWidth
-        height: 600, // Or window.innerHeight
+        width: 800,
+        height: 600,
       });
     }
     updateCanvasSize();
@@ -120,40 +142,139 @@ export default function GameCanvas({ level }: GameCanvasProps) {
     return () => window.removeEventListener("resize", updateCanvasSize);
   }, []);
 
-  //Create a Set of walkable tiles once on mount
   const WALKABLE = useMemo(
     () => new Set(tileDefinitions.filter((t) => t.walkable).map((t) => t.id)),
     []
   );
 
-  // Memoize attemptMove to prevent redefining it on every render
+  const tileDefinitionMap = useMemo(() => {
+    const map = new Map<number, TileDefinition>();
+    tileDefinitions.forEach((tile) => {
+      map.set(tile.id, tile);
+    });
+    return map;
+  }, []);
+
   const attemptMove = useCallback(
     (deltaRow: number, deltaCol: number) => {
       setPlayerTile((pos) => {
         const newRow = pos.row + deltaRow;
         const newCol = pos.col + deltaCol;
 
-        // Bounds check
         if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols) {
           return pos; // out of map
         }
 
-        // Collision check
         const tileId = mapGrid[newRow][newCol];
         if (!WALKABLE.has(tileId)) {
           return pos; // blocked
         }
 
-        // Otherwise, move
         return { row: newRow, col: newCol };
       });
     },
     [cols, mapGrid, rows, WALKABLE]
-  ); // Include dependencies if they were used inside (rows, cols are used)
+  );
+
+  const handleTileEvent = useCallback(
+    (tileDef: TileDefinition, event: TileEvent) => {
+      switch (event.type) {
+        case "levelTransition": {
+          if (!event.targetLevelId) {
+            return;
+          }
+          onLevelChange?.({
+            targetLevelId: event.targetLevelId,
+            spawn: event.spawn,
+          });
+          break;
+        }
+        case "dialogue": {
+          const dialogue = npcDialogues[event.npcId];
+          if (dialogue) {
+            onDialogue?.(dialogue);
+          } else if (onDialogue) {
+            onDialogue({
+              id: event.npcId,
+              name: tileDef.name,
+              lines: ["..."],
+            });
+          }
+          break;
+        }
+        case "battle": {
+          const encounter = battleEncounters[event.encounterId];
+          if (!encounter) {
+            console.warn(`Encounter not found: ${event.encounterId}`);
+            return;
+          }
+          const params = new URLSearchParams();
+          params.set("encounter", event.encounterId);
+          params.set("returnLevel", activeLevel.id);
+          router.push(`/battleScreen?${params.toString()}`);
+          break;
+        }
+      }
+    },
+    [activeLevel.id, onDialogue, onLevelChange, router]
+  );
+
+  const lastTransitionKey = useRef<string | null>(null);
+  useEffect(() => {
+    const tileId = mapGrid[playerTile.row]?.[playerTile.col];
+    if (tileId === undefined) {
+      lastTransitionKey.current = null;
+      return;
+    }
+    const tileDef = tileDefinitionMap.get(tileId);
+    if (!tileDef?.event || tileDef.event.type !== "levelTransition") {
+      lastTransitionKey.current = null;
+      return;
+    }
+    const key = `${playerTile.row}:${playerTile.col}:${tileId}`;
+    if (lastTransitionKey.current === key) {
+      return;
+    }
+    lastTransitionKey.current = key;
+    handleTileEvent(tileDef, tileDef.event);
+  }, [handleTileEvent, mapGrid, playerTile, tileDefinitionMap]);
+
+  const interactWithFacingTile = useCallback(() => {
+    const offsets: Record<Direction, { row: number; col: number }> = {
+      down: { row: 1, col: 0 },
+      up: { row: -1, col: 0 },
+      left: { row: 0, col: -1 },
+      right: { row: 0, col: 1 },
+    };
+    const offset = offsets[dir];
+    const targetRow = playerTile.row + offset.row;
+    const targetCol = playerTile.col + offset.col;
+
+    if (
+      targetRow < 0 ||
+      targetRow >= rows ||
+      targetCol < 0 ||
+      targetCol >= cols
+    ) {
+      return;
+    }
+
+    const tileId = mapGrid[targetRow][targetCol];
+    const tileDef = tileDefinitionMap.get(tileId);
+    if (!tileDef?.event) {
+      return;
+    }
+
+    if (tileDef.event.type === "levelTransition") {
+      // Players trigger level transitions by stepping onto the tile, not interacting.
+      return;
+    }
+
+    handleTileEvent(tileDef, tileDef.event);
+  }, [cols, dir, handleTileEvent, mapGrid, playerTile, rows, tileDefinitionMap]);
 
   // Drawing Effect
   useEffect(() => {
-    // Checking if everything is loaded and canvas is ready
     if (
       !loadedImages ||
       !canvasRef.current ||
@@ -167,63 +288,50 @@ export default function GameCanvas({ level }: GameCanvasProps) {
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return; // Important check
+    if (!ctx) return;
 
-    // Clear the entire canvas
     ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
     const mapWidth = cols * tileSize;
     const mapHeight = rows * tileSize;
 
-    // Center the camera on the player tile
     let cameraX =
       playerTile.col * tileSize - canvasSize.width / 2 + tileSize / 2;
     let cameraY =
       playerTile.row * tileSize - canvasSize.height / 2 + tileSize / 2;
 
-    // clamp so camera never goes beyond the map
     cameraX = Math.max(0, Math.min(cameraX, mapWidth - canvasSize.width));
     cameraY = Math.max(0, Math.min(cameraY, mapHeight - canvasSize.height));
 
-    // which tile index is at top-left of the camera
     const startCol = Math.floor(cameraX / tileSize);
     const startRow = Math.floor(cameraY / tileSize);
 
-    // how many tiles fit on-screen (+2 for buffer when scrolling)
     const visibleCols = Math.ceil(canvas.width / tileSize) + 2;
     const visibleRows = Math.ceil(canvas.height / tileSize) + 2;
 
-    // Disable image smoothing for pixel art
     ctx.imageSmoothingEnabled = false;
 
-    // Draw map tiles
     for (let row = startRow; row < startRow + visibleRows; row++) {
       for (let col = startCol; col < startCol + visibleCols; col++) {
-        // Check if the tile is within the map boundaries
         if (
           row < 0 ||
           row >= mapGrid.length ||
           col < 0 ||
           col >= mapGrid[0].length
         ) {
-          continue; // Skip drawing if outside map bounds
+          continue;
         }
 
         const tileType = mapGrid[row][col];
-
-        // Look up the tile definition to get the scale (default is 1 if not specified)
-        const tileDef = tileDefinitions.find((t) => t.id === tileType);
+        const tileDef = tileDefinitionMap.get(tileType);
         const scale = tileDef?.scale ?? 1;
         const drawSize = tileSize * scale;
-        // Center the scaled tile within the grid cell
         const offset = (drawSize - tileSize) / 2;
         const drawX = Math.floor(col * tileSize - cameraX) - offset;
         const drawY = Math.floor(row * tileSize - cameraY) - offset;
 
-        // Get the loaded image for this tile type
         const tileImg = loadedImages[tileType];
 
-        // Draw the tile image with scaling or fallback to a filled rectangle
         if (tileImg && tileImg.complete && tileImg.naturalHeight !== 0) {
           ctx.drawImage(tileImg, drawX, drawY, drawSize, drawSize);
         } else {
@@ -233,7 +341,6 @@ export default function GameCanvas({ level }: GameCanvasProps) {
       }
     }
 
-    // Draw Player
     const img = playerImages[dir];
     const playerScreenX = Math.floor(playerTile.col * tileSize - cameraX);
     const playerScreenY = Math.floor(playerTile.row * tileSize - cameraY);
@@ -241,15 +348,8 @@ export default function GameCanvas({ level }: GameCanvasProps) {
     const playerHeight = tileSize;
 
     if (img && img.complete && img.naturalHeight !== 0) {
-      ctx.drawImage(
-        img,
-        playerScreenX,
-        playerScreenY,
-        playerWidth,
-        playerHeight
-      );
+      ctx.drawImage(img, playerScreenX, playerScreenY, playerWidth, playerHeight);
     } else {
-      // Fallback
       ctx.fillStyle = "blue";
       ctx.fillRect(playerScreenX, playerScreenY, tileSize, tileSize);
     }
@@ -263,42 +363,53 @@ export default function GameCanvas({ level }: GameCanvasProps) {
     rows,
     cols,
     mapGrid,
+    tileDefinitionMap,
   ]);
 
-  // Keyboard Input Effect
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      if (isInputDisabled) {
+        return;
+      }
+
       switch (e.key) {
         case "ArrowUp":
         case "w":
+          e.preventDefault();
           setDir("up");
           attemptMove(-1, 0);
           break;
         case "ArrowDown":
         case "s":
+          e.preventDefault();
           setDir("down");
           attemptMove(1, 0);
           break;
         case "ArrowLeft":
         case "a":
+          e.preventDefault();
           setDir("left");
           attemptMove(0, -1);
           break;
         case "ArrowRight":
         case "d":
+          e.preventDefault();
           setDir("right");
           attemptMove(0, 1);
+          break;
+        case " ":
+        case "Enter":
+          e.preventDefault();
+          interactWithFacingTile();
           break;
         default:
           break;
       }
     }
     window.addEventListener("keydown", handleKeyDown);
-    // Cleanup: Remove listener when component unmounts
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [attemptMove]); // Add attemptMove as a dependency because it's defined outside
+  }, [attemptMove, interactWithFacingTile, isInputDisabled]);
 
-  // Render the Canvas
   return (
     <canvas
       ref={canvasRef}
