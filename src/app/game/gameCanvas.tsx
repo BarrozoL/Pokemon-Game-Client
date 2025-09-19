@@ -87,11 +87,26 @@ export default function GameCanvas({
   const [gameMessage, setGameMessage] = useState<GameMessage | null>(null);
   const [inventory, setInventory] = useState<string[]>([]);
   const [playerHealth, setPlayerHealth] = useState(100);
+  const [mapModifications, setMapModifications] = useState<Map<string, number>>(new Map());
+
+  // Get the current map with modifications applied
+  const currentMap = useMemo(() => {
+    const modifiedMap = mapGrid.map(row => [...row]); // Deep copy
+    mapModifications.forEach((tileId, key) => {
+      const [row, col] = key.split(',').map(Number);
+      if (modifiedMap[row] && modifiedMap[row][col] !== undefined) {
+        modifiedMap[row][col] = tileId;
+      }
+    });
+    return modifiedMap;
+  }, [mapGrid, mapModifications]);
 
   useEffect(() => {
     setPlayerTile({ row: effectiveEntry.row, col: effectiveEntry.col });
     setDir("down");
-  }, [effectiveEntry.row, effectiveEntry.col]);
+    // Clear map modifications when changing levels
+    setMapModifications(new Map());
+  }, [effectiveEntry.row, effectiveEntry.col, activeLevel.id]);
 
   // Handle game message timeouts
   useEffect(() => {
@@ -184,7 +199,7 @@ export default function GameCanvas({
           return pos; // out of map
         }
 
-        const tileId = mapGrid[newRow][newCol];
+        const tileId = currentMap[newRow][newCol];
         if (!WALKABLE.has(tileId)) {
           return pos; // blocked
         }
@@ -192,7 +207,7 @@ export default function GameCanvas({
         return { row: newRow, col: newCol };
       });
     },
-    [cols, mapGrid, rows, WALKABLE]
+    [cols, currentMap, rows, WALKABLE]
   );
 
   const handleTileEvent = useCallback(
@@ -261,11 +276,15 @@ export default function GameCanvas({
           break;
         }
         case "secret": {
-          // Reveal secret tiles
-          event.revealTiles.forEach(tile => {
-            if (mapGrid[tile.row] && mapGrid[tile.row][tile.col] !== undefined) {
-              mapGrid[tile.row][tile.col] = tile.newTileId;
-            }
+          // Reveal secret tiles using proper state management
+          setMapModifications(prev => {
+            const newModifications = new Map(prev);
+            event.revealTiles.forEach(tile => {
+              if (mapGrid[tile.row] && mapGrid[tile.row][tile.col] !== undefined) {
+                newModifications.set(`${tile.row},${tile.col}`, tile.newTileId);
+              }
+            });
+            return newModifications;
           });
           setGameMessage({
             type: "secret",
@@ -296,25 +315,33 @@ export default function GameCanvas({
     [activeLevel.id, onDialogue, onLevelChange, router, mapGrid]
   );
 
-  const lastTransitionKey = useRef<string | null>(null);
+  const lastTileEventKey = useRef<string | null>(null);
   useEffect(() => {
-    const tileId = mapGrid[playerTile.row]?.[playerTile.col];
+    const tileId = currentMap[playerTile.row]?.[playerTile.col];
     if (tileId === undefined) {
-      lastTransitionKey.current = null;
+      lastTileEventKey.current = null;
       return;
     }
     const tileDef = tileDefinitionMap.get(tileId);
-    if (!tileDef?.event || tileDef.event.type !== "levelTransition") {
-      lastTransitionKey.current = null;
+    if (!tileDef?.event) {
+      lastTileEventKey.current = null;
       return;
     }
+
+    // Only handle events that trigger when stepping on tiles
+    const stepOnEvents = ["levelTransition", "treasure", "heal", "teleport", "secret"];
+    if (!stepOnEvents.includes(tileDef.event.type)) {
+      lastTileEventKey.current = null;
+      return;
+    }
+
     const key = `${playerTile.row}:${playerTile.col}:${tileId}`;
-    if (lastTransitionKey.current === key) {
+    if (lastTileEventKey.current === key) {
       return;
     }
-    lastTransitionKey.current = key;
+    lastTileEventKey.current = key;
     handleTileEvent(tileDef, tileDef.event);
-  }, [handleTileEvent, mapGrid, playerTile, tileDefinitionMap]);
+  }, [handleTileEvent, currentMap, playerTile, tileDefinitionMap]);
 
   const interactWithFacingTile = useCallback(() => {
     const offsets: Record<Direction, { row: number; col: number }> = {
@@ -336,19 +363,20 @@ export default function GameCanvas({
       return;
     }
 
-    const tileId = mapGrid[targetRow][targetCol];
+    const tileId = currentMap[targetRow][targetCol];
     const tileDef = tileDefinitionMap.get(tileId);
     if (!tileDef?.event) {
       return;
     }
 
-    if (tileDef.event.type === "levelTransition") {
-      // Players trigger level transitions by stepping onto the tile, not interacting.
+    // Only handle events that require interaction (facing + pressing space/enter)
+    const interactionEvents = ["dialogue", "battle", "puzzle", "shop"];
+    if (!interactionEvents.includes(tileDef.event.type)) {
       return;
     }
 
     handleTileEvent(tileDef, tileDef.event);
-  }, [cols, dir, handleTileEvent, mapGrid, playerTile, rows, tileDefinitionMap]);
+  }, [cols, dir, handleTileEvent, currentMap, playerTile, rows, tileDefinitionMap]);
 
   // Drawing Effect
   useEffect(() => {
@@ -392,14 +420,14 @@ export default function GameCanvas({
       for (let col = startCol; col < startCol + visibleCols; col++) {
         if (
           row < 0 ||
-          row >= mapGrid.length ||
+          row >= currentMap.length ||
           col < 0 ||
-          col >= mapGrid[0].length
+          col >= currentMap[0].length
         ) {
           continue;
         }
 
-        const tileType = mapGrid[row][col];
+        const tileType = currentMap[row][col];
         const tileDef = tileDefinitionMap.get(tileType);
         const scale = tileDef?.scale ?? 1;
         const drawSize = tileSize * scale;
@@ -439,7 +467,7 @@ export default function GameCanvas({
     tileSize,
     rows,
     cols,
-    mapGrid,
+    currentMap,
     tileDefinitionMap,
   ]);
 

@@ -390,7 +390,7 @@ export const tileDefinitions: TileDefinition[] = [
     id: TILES.MYSTERIOUS_ORB,
     name: "mysterious-orb",
     imagePath: "/tiles/mysterious-orb.svg",
-    walkable: true,
+    walkable: false,
     scale: 1.0,
     event: { type: "puzzle", puzzleId: "orb-sequence" },
   },
@@ -659,10 +659,10 @@ function createVerdantFields(): number[][] {
   fillRectangle(map, 35, 10, 37, 15, TILES.BOULDER);
 
   // Gate to next level
-  placeTile(map, 32, 46, TILES.COBBLESTONE);
-  placeTile(map, 33, 45, TILES.COBBLESTONE);
-  placeTile(map, 34, 46, TILES.COBBLESTONE);
-  placeTile(map, 33, 46, TILES.VERDANT_GATE);
+  placeTile(map, 32, 45, TILES.COBBLESTONE);
+  placeTile(map, 33, 44, TILES.COBBLESTONE);
+  placeTile(map, 34, 45, TILES.COBBLESTONE);
+  placeTile(map, 33, 45, TILES.VERDANT_GATE);
 
   return map;
 }
@@ -778,7 +778,7 @@ function createCrimsonDunes(): number[][] {
   placeTile(map, 35, 8, TILES.LOCKED_DOOR);
 
   // Gate to next level
-  placeTile(map, 30, 46, TILES.DESERT_GATE);
+  placeTile(map, 30, 45, TILES.DESERT_GATE);
 
   return map;
 }
@@ -835,7 +835,7 @@ function createLuminousGlade(): number[][] {
   fillRectangle(map, 12, 20, 14, 22, TILES.ICE_PATCH);
 
   // Return gate to beginning
-  placeTile(map, 32, 46, TILES.GLADE_GATE);
+  placeTile(map, 32, 45, TILES.GLADE_GATE);
 
   return map;
 }
