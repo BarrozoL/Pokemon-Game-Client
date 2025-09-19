@@ -39,6 +39,30 @@ const defaultPlayerAttacks: AttackDefinition[] = [
     power: 20,
     description: "A roaring gust crashes into the foe.",
   },
+  {
+    name: "Mystic Shield",
+    power: -10,
+    description: "Channel protective energy to heal and fortify.",
+  },
+];
+
+const advancedPlayerAttacks: AttackDefinition[] = [
+  ...defaultPlayerAttacks,
+  {
+    name: "Elemental Fusion",
+    power: 25,
+    description: "Combine earth, air, fire, and water into one devastating assault.",
+  },
+  {
+    name: "Temporal Strike",
+    power: 22,
+    description: "Attack that transcends time, hitting past, present, and future.",
+  },
+  {
+    name: "Spirit Bond",
+    power: -20,
+    description: "Connect with ancient spirits for massive healing.",
+  },
 ];
 
 export const battleEncounters: Record<string, BattleEncounter> = {
@@ -163,8 +187,13 @@ export const battleEncounters: Record<string, BattleEncounter> = {
         power: 18,
         description: "Roots surge up in a protective wave.",
       },
+      {
+        name: "Grove's Blessing",
+        power: -12,
+        description: "Natural energies restore vitality.",
+      },
     ],
-    playerAttacks: defaultPlayerAttacks,
+    playerAttacks: advancedPlayerAttacks,
     introText:
       "Elowen tests your aura, branches bending toward her call.",
     victoryText:
@@ -176,8 +205,8 @@ export const battleEncounters: Record<string, BattleEncounter> = {
     id: "glade-seer",
     enemyName: "Seer Vaela",
     enemySprite: "/characters/player-back.png",
-    enemyMaxHp: 70,
-    playerMaxHp: 75,
+    enemyMaxHp: 80,
+    playerMaxHp: 85,
     enemyAttacks: [
       {
         name: "Moonpetal Flare",
@@ -189,14 +218,62 @@ export const battleEncounters: Record<string, BattleEncounter> = {
         power: 20,
         description: "Time skips as a spiral of magic unravels your stance.",
       },
+      {
+        name: "Future Sight",
+        power: 23,
+        description: "Strike from tomorrow hits you in the present.",
+      },
+      {
+        name: "Temporal Heal",
+        power: -18,
+        description: "Rewind personal time to undo recent wounds.",
+      },
     ],
-    playerAttacks: defaultPlayerAttacks,
+    playerAttacks: advancedPlayerAttacks,
     introText:
       "Vaela's gaze pierces through timelines before she raises her staff.",
     victoryText:
-      "Vaela smiles knowingly. \"Circle back to the fields—your journey has only begun.\"",
+      "Vaela smiles knowingly. \"You've mastered the ancient arts. Your true journey across expanded realms begins now.\"",
     defeatText:
-      "The seer cradles you in shimmering light, sending you back to recover.",
+      "The seer cradles you in shimmering light, sending you back to recover and grow stronger.",
+  },
+  "glade-druid": {
+    id: "glade-druid",
+    enemyName: "Druid Thornweaver",
+    enemySprite: "/characters/wizard-blue.png",
+    enemyMaxHp: 75,
+    playerMaxHp: 80,
+    enemyAttacks: [
+      {
+        name: "Nature's Wrath",
+        power: 19,
+        description: "Thorned vines erupt from the earth in a spiraling assault.",
+      },
+      {
+        name: "Crystal Shard",
+        power: 22,
+        description: "Crystalline projectiles pierce through natural armor.",
+      },
+      {
+        name: "Healing Mist",
+        power: -15,
+        description: "Restorative fog heals wounds and renews strength.",
+      },
+    ],
+    playerAttacks: [
+      ...defaultPlayerAttacks,
+      {
+        name: "Elemental Burst",
+        power: 24,
+        description: "Channel the power of all four elements into a devastating strike.",
+      },
+    ],
+    introText:
+      "Thornweaver rises from the crystal grove, ancient magic coursing through their veins.",
+    victoryText:
+      "The druid bows deeply. \"You have proven yourself worthy of the grove's deepest secrets.\"",
+    defeatText:
+      "Natural energies overwhelm you as the druid offers sanctuary to recover.",
   },
 };
 
@@ -207,6 +284,25 @@ export const npcDialogues: Record<string, DialogueEntry> = {
     lines: [
       "The fields are stirring with rumors of distant biomes.",
       "Seek the waystones when you're ready to wander beyond this meadow.",
+      "I sense you've grown stronger since we last spoke. The ancient energies respond to your presence.",
+    ],
+  },
+  "verdant-merchant": {
+    id: "verdant-merchant",
+    name: "Gareth the Traveling Merchant",
+    lines: [
+      "Welcome, traveler! I've got potions, maps, and trinkets from across the realms.",
+      "That mysterious orb you're carrying... I've seen its like in the Azure Approach.",
+      "Business has been good lately - more adventurers are exploring these expanded lands.",
+    ],
+  },
+  "verdant-explorer": {
+    id: "verdant-explorer",
+    name: "Kira the Pathfinder",
+    lines: [
+      "These fields have grown vast and wild! I've discovered three new secret passages this week alone.",
+      "The ancient rune near the eastern edge... when activated, it reveals hidden pathways.",
+      "Beware the quicksand in the desert - I barely escaped it myself!",
     ],
   },
   "azure-chronicler": {
@@ -231,6 +327,25 @@ export const npcDialogues: Record<string, DialogueEntry> = {
     lines: [
       "I sing for sailors watching the horizon.",
       "Bring back a melody from the desert and I'll weave it into tonight's song.",
+      "The new pier networks have inspired so many songs - each bridge tells a story.",
+    ],
+  },
+  "azure-fisherman": {
+    id: "azure-fisherman",
+    name: "Old Salt Marcus",
+    lines: [
+      "Been fishing these waters for forty years, but I've never seen the tides this active.",
+      "The bridge levers control ancient mechanisms - some say they date back to the First Builders.",
+      "Caught something strange today... a key that glows with azure light. You might need it.",
+    ],
+  },
+  "azure-scholar": {
+    id: "azure-scholar",
+    name: "Thessarian the Lore Keeper",
+    lines: [
+      "These underwater ruins hold secrets from a sunken civilization.",
+      "I've decoded partial texts about 'The Great Linking' - pathways between all realms.",
+      "The healing fountains are not natural - they're ancient magical constructs still functioning.",
     ],
   },
   "desert-storyteller": {
@@ -255,6 +370,25 @@ export const npcDialogues: Record<string, DialogueEntry> = {
     lines: [
       "Starlight pools beneath the dunes at dusk.",
       "Touch the crystalline waystone once your spirit resonates with the desert.",
+      "The quicksand speaks of ancient burial chambers far below the surface.",
+    ],
+  },
+  "desert-trader": {
+    id: "desert-trader",
+    name: "Zahra of the Oasis Markets",
+    lines: [
+      "The finest goods from every caravan route pass through my stall.",
+      "That locked door you found? I have keys, but they don't come cheap.",
+      "The nomads speak of a hidden treasure vault beneath the Great Dune.",
+    ],
+  },
+  "desert-nomad": {
+    id: "desert-nomad",
+    name: "Jamal the Windwalker",
+    lines: [
+      "I've walked these sands since I was a child, but the dunes have shifted into new patterns.",
+      "The ancient runes are awakening - something stirs in the deep desert.",
+      "Follow the star patterns at night - they'll guide you to the secret oases.",
     ],
   },
   "glade-historian": {
@@ -279,6 +413,25 @@ export const npcDialogues: Record<string, DialogueEntry> = {
     lines: [
       "We nurture seedlings brought from every biome.",
       "When you're ready to return to the fields, the eastern waystone will guide you.",
+      "The crystal vines have been growing restless - they sense the awakening of old magic.",
+    ],
+  },
+  "glade-sprite": {
+    id: "glade-sprite",
+    name: "Luminara the Grove Sprite",
+    lines: [
+      "The mushroom circles are portals - but only the pure of heart can use them safely.",
+      "I've seen travelers appear from thin air when they step through the fairy rings.",
+      "The ice patches aren't natural - they're tears in reality where winter bleeds through.",
+    ],
+  },
+  "crystalvine-spirit": {
+    id: "crystalvine-spirit",
+    name: "The Crystalvine Consciousness",
+    lines: [
+      "We are the living memory of this grove, growing since the First Dawn.",
+      "Your presence accelerates our growth - you carry the spark of ancient magic.",
+      "Beware the locked doors in distant realms - not all barriers should be opened.",
     ],
   },
 };
