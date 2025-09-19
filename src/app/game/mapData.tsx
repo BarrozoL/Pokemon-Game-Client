@@ -381,7 +381,7 @@ export const tileDefinitions: TileDefinition[] = [
   {
     id: TILES.TREASURE_CHEST,
     name: "treasure-chest",
-    imagePath: "/tiles/grass-tile-5.png", // Placeholder - you can replace with chest image
+    imagePath: "/tiles/treasure-chest.svg",
     walkable: true,
     scale: 1.2,
     event: { type: "treasure", itemId: "ancient-coin", message: "You found an ancient coin!" },
@@ -389,32 +389,33 @@ export const tileDefinitions: TileDefinition[] = [
   {
     id: TILES.MYSTERIOUS_ORB,
     name: "mysterious-orb",
-    imagePath: "/globe.svg",
+    imagePath: "/tiles/mysterious-orb.svg",
     walkable: true,
-    scale: 0.8,
+    scale: 1.0,
     event: { type: "puzzle", puzzleId: "orb-sequence" },
   },
   {
     id: TILES.ANCIENT_RUNE,
     name: "ancient-rune",
-    imagePath: "/tiles/cobblestone-path-tile.png",
+    imagePath: "/tiles/ancient-rune.svg",
     walkable: true,
+    scale: 1.0,
     event: { type: "secret", revealTiles: [{ row: 10, col: 10, newTileId: TILES.SECRET_PASSAGE }] },
   },
   {
     id: TILES.BRIDGE_LEVER,
     name: "bridge-lever",
-    imagePath: "/tiles/rock-obstacle-tile.png",
+    imagePath: "/tiles/bridge-lever.svg",
     walkable: false,
-    scale: 1.1,
+    scale: 1.0,
     event: { type: "puzzle", puzzleId: "bridge-mechanism" },
   },
   {
     id: TILES.LOCKED_DOOR,
     name: "locked-door",
-    imagePath: "/tiles/rock-obstacle-tile.png",
+    imagePath: "/tiles/locked-door.svg",
     walkable: false,
-    scale: 1.3,
+    scale: 1.0,
     event: { type: "puzzle", puzzleId: "door-key" },
   },
   {
@@ -427,9 +428,9 @@ export const tileDefinitions: TileDefinition[] = [
   {
     id: TILES.HEALING_FOUNTAIN,
     name: "healing-fountain",
-    imagePath: "/tiles/water-tile-3.png",
+    imagePath: "/tiles/healing-fountain.svg",
     walkable: true,
-    scale: 1.1,
+    scale: 1.0,
     event: { type: "heal", amount: 25, message: "The mystical waters restore your energy!" },
   },
   {
@@ -442,9 +443,9 @@ export const tileDefinitions: TileDefinition[] = [
   {
     id: TILES.CRYSTALVINE,
     name: "crystalvine",
-    imagePath: "/tiles/bush-tile-2.png",
+    imagePath: "/tiles/crystal-vine.svg",
     walkable: false,
-    scale: 1.2,
+    scale: 1.0,
     event: { type: "dialogue", npcId: "crystalvine-spirit" },
   },
   {
@@ -658,10 +659,10 @@ function createVerdantFields(): number[][] {
   fillRectangle(map, 35, 10, 37, 15, TILES.BOULDER);
 
   // Gate to next level
-  placeTile(map, 32, 40, TILES.COBBLESTONE);
-  placeTile(map, 33, 39, TILES.COBBLESTONE);
-  placeTile(map, 34, 40, TILES.COBBLESTONE);
-  placeTile(map, 33, 40, TILES.VERDANT_GATE);
+  placeTile(map, 32, 46, TILES.COBBLESTONE);
+  placeTile(map, 33, 45, TILES.COBBLESTONE);
+  placeTile(map, 34, 46, TILES.COBBLESTONE);
+  placeTile(map, 33, 46, TILES.VERDANT_GATE);
 
   return map;
 }
@@ -777,7 +778,7 @@ function createCrimsonDunes(): number[][] {
   placeTile(map, 35, 8, TILES.LOCKED_DOOR);
 
   // Gate to next level
-  placeTile(map, 30, 40, TILES.DESERT_GATE);
+  placeTile(map, 30, 46, TILES.DESERT_GATE);
 
   return map;
 }
@@ -834,7 +835,7 @@ function createLuminousGlade(): number[][] {
   fillRectangle(map, 12, 20, 14, 22, TILES.ICE_PATCH);
 
   // Return gate to beginning
-  placeTile(map, 32, 40, TILES.GLADE_GATE);
+  placeTile(map, 32, 46, TILES.GLADE_GATE);
 
   return map;
 }

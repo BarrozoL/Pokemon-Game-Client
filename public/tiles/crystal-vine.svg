@@ -1,0 +1,66 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="vineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#228B22"/>
+      <stop offset="50%" style="stop-color:#32CD32"/>
+      <stop offset="100%" style="stop-color:#006400"/>
+    </linearGradient>
+    <radialGradient id="crystalGrad" cx="30%" cy="30%" r="80%">
+      <stop offset="0%" style="stop-color:#E6E6FA"/>
+      <stop offset="50%" style="stop-color:#9370DB"/>
+      <stop offset="100%" style="stop-color:#4B0082"/>
+    </radialGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#90EE90"/>
+      <stop offset="100%" style="stop-color:#228B22"/>
+    </linearGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#9370DB" stop-opacity="0.6"/>
+      <stop offset="100%" style="stop-color:#9370DB" stop-opacity="0.1"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Magical glow -->
+  <circle cx="16" cy="16" r="15" fill="url(#glowGrad)"/>
+
+  <!-- Main vine stem -->
+  <path d="M 8 28 Q 12 20 16 16 Q 20 12 24 4" stroke="url(#vineGrad)" stroke-width="3" fill="none"/>
+
+  <!-- Side branches -->
+  <path d="M 12 20 Q 8 16 4 12" stroke="url(#vineGrad)" stroke-width="2" fill="none"/>
+  <path d="M 20 12 Q 24 8 28 8" stroke="url(#vineGrad)" stroke-width="2" fill="none"/>
+
+  <!-- Leaves -->
+  <ellipse cx="10" cy="18" rx="3" ry="2" fill="url(#leafGrad)" transform="rotate(-30 10 18)"/>
+  <ellipse cx="6" cy="14" rx="2.5" ry="1.5" fill="url(#leafGrad)" transform="rotate(-45 6 14)"/>
+  <ellipse cx="22" cy="10" rx="3" ry="2" fill="url(#leafGrad)" transform="rotate(15 22 10)"/>
+  <ellipse cx="26" cy="8" rx="2" ry="1.5" fill="url(#leafGrad)" transform="rotate(30 26 8)"/>
+
+  <!-- Crystal growths -->
+  <g transform="translate(16,16)">
+    <!-- Main crystal -->
+    <path d="M 0 -2 L 2 0 L 0 4 L -2 0 Z" fill="url(#crystalGrad)" stroke="#4B0082" stroke-width="0.5"/>
+
+    <!-- Side crystals -->
+    <path d="M -4 -1 L -2 -3 L -1 -1 L -3 1 Z" fill="url(#crystalGrad)" stroke="#4B0082" stroke-width="0.5"/>
+    <path d="M 4 1 L 2 3 L 1 1 L 3 -1 Z" fill="url(#crystalGrad)" stroke="#4B0082" stroke-width="0.5"/>
+  </g>
+
+  <!-- Small crystal clusters -->
+  <g transform="translate(12,20)">
+    <path d="M 0 -1 L 1 0 L 0 2 L -1 0 Z" fill="url(#crystalGrad)" stroke="#4B0082" stroke-width="0.3"/>
+  </g>
+  <g transform="translate(20,12)">
+    <path d="M 0 -1 L 1 0 L 0 2 L -1 0 Z" fill="url(#crystalGrad)" stroke="#4B0082" stroke-width="0.3"/>
+  </g>
+
+  <!-- Magical sparkles -->
+  <circle cx="8" cy="8" r="0.5" fill="#DDA0DD" opacity="0.8"/>
+  <circle cx="24" cy="24" r="0.5" fill="#DDA0DD" opacity="0.6"/>
+  <circle cx="6" cy="26" r="0.5" fill="#DDA0DD" opacity="0.7"/>
+  <circle cx="26" cy="6" r="0.5" fill="#DDA0DD" opacity="0.5"/>
+
+  <!-- Energy streams -->
+  <path d="M 14 18 Q 16 14 18 10" stroke="#9370DB" stroke-width="1" fill="none" opacity="0.6"/>
+  <path d="M 10 22 Q 14 20 18 18" stroke="#9370DB" stroke-width="1" fill="none" opacity="0.4"/>
+</svg>

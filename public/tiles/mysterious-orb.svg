@@ -1,0 +1,52 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="orbGrad" cx="30%" cy="30%" r="80%">
+      <stop offset="0%" style="stop-color:#E6E6FA"/>
+      <stop offset="40%" style="stop-color:#9370DB"/>
+      <stop offset="80%" style="stop-color:#4B0082"/>
+      <stop offset="100%" style="stop-color:#2E003E"/>
+    </radialGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#8A2BE2" stop-opacity="0.8"/>
+      <stop offset="70%" style="stop-color:#9370DB" stop-opacity="0.4"/>
+      <stop offset="100%" style="stop-color:#DDA0DD" stop-opacity="0.1"/>
+    </radialGradient>
+    <linearGradient id="runeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700"/>
+      <stop offset="100%" style="stop-color:#FFA500"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Magical glow -->
+  <circle cx="16" cy="16" r="15" fill="url(#glowGrad)"/>
+
+  <!-- Main orb -->
+  <circle cx="16" cy="16" r="10" fill="url(#orbGrad)" stroke="#4B0082" stroke-width="1"/>
+
+  <!-- Inner magical core -->
+  <circle cx="16" cy="16" r="6" fill="none" stroke="url(#runeGrad)" stroke-width="1" opacity="0.8"/>
+
+  <!-- Mysterious runes around orb -->
+  <g transform="rotate(0 16 16)">
+    <path d="M 16 6 L 18 8 L 16 10 L 14 8 Z" fill="url(#runeGrad)" opacity="0.9"/>
+  </g>
+  <g transform="rotate(90 16 16)">
+    <path d="M 16 6 L 18 8 L 16 10 L 14 8 Z" fill="url(#runeGrad)" opacity="0.7"/>
+  </g>
+  <g transform="rotate(180 16 16)">
+    <path d="M 16 6 L 18 8 L 16 10 L 14 8 Z" fill="url(#runeGrad)" opacity="0.8"/>
+  </g>
+  <g transform="rotate(270 16 16)">
+    <path d="M 16 6 L 18 8 L 16 10 L 14 8 Z" fill="url(#runeGrad)" opacity="0.6"/>
+  </g>
+
+  <!-- Energy swirls -->
+  <path d="M 10 16 Q 16 10 22 16 Q 16 22 10 16" stroke="url(#runeGrad)" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M 16 10 Q 22 16 16 22 Q 10 16 16 10" stroke="url(#runeGrad)" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Floating particles -->
+  <circle cx="8" cy="8" r="0.5" fill="#FFD700" opacity="0.8"/>
+  <circle cx="24" cy="10" r="0.5" fill="#FFD700" opacity="0.6"/>
+  <circle cx="6" cy="22" r="0.5" fill="#FFD700" opacity="0.7"/>
+  <circle cx="26" cy="24" r="0.5" fill="#FFD700" opacity="0.5"/>
+</svg>

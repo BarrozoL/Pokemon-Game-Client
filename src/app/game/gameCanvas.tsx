@@ -41,6 +41,12 @@ interface GameCanvasProps {
   isInputDisabled?: boolean;
 }
 
+interface GameMessage {
+  type: "treasure" | "heal" | "puzzle" | "secret" | "shop";
+  message: string;
+  duration?: number;
+}
+
 export default function GameCanvas({
   level,
   entryPosition,
@@ -78,11 +84,24 @@ export default function GameCanvas({
   const [playerImages, setPlayerImages] = useState<
     Partial<Record<Direction, HTMLImageElement>>
   >({});
+  const [gameMessage, setGameMessage] = useState<GameMessage | null>(null);
+  const [inventory, setInventory] = useState<string[]>([]);
+  const [playerHealth, setPlayerHealth] = useState(100);
 
   useEffect(() => {
     setPlayerTile({ row: effectiveEntry.row, col: effectiveEntry.col });
     setDir("down");
   }, [effectiveEntry.row, effectiveEntry.col]);
+
+  // Handle game message timeouts
+  useEffect(() => {
+    if (gameMessage && gameMessage.duration) {
+      const timer = setTimeout(() => {
+        setGameMessage(null);
+      }, gameMessage.duration);
+      return () => clearTimeout(timer);
+    }
+  }, [gameMessage]);
 
   // Effect for loading images
   useEffect(() => {
@@ -214,9 +233,67 @@ export default function GameCanvas({
           router.push(`/battleScreen?${params.toString()}`);
           break;
         }
+        case "treasure": {
+          setInventory(prev => [...prev, event.itemId]);
+          setGameMessage({
+            type: "treasure",
+            message: event.message,
+            duration: 3000
+          });
+          break;
+        }
+        case "heal": {
+          setPlayerHealth(prev => Math.min(100, prev + event.amount));
+          setGameMessage({
+            type: "heal",
+            message: event.message,
+            duration: 2000
+          });
+          break;
+        }
+        case "puzzle": {
+          setGameMessage({
+            type: "puzzle",
+            message: `Activated ${event.puzzleId}! Something changed in the distance...`,
+            duration: 3000
+          });
+          // Puzzle logic could be expanded here
+          break;
+        }
+        case "secret": {
+          // Reveal secret tiles
+          event.revealTiles.forEach(tile => {
+            if (mapGrid[tile.row] && mapGrid[tile.row][tile.col] !== undefined) {
+              mapGrid[tile.row][tile.col] = tile.newTileId;
+            }
+          });
+          setGameMessage({
+            type: "secret",
+            message: "A secret passage has been revealed!",
+            duration: 3000
+          });
+          break;
+        }
+        case "teleport": {
+          setPlayerTile({ row: event.targetRow, col: event.targetCol });
+          setGameMessage({
+            type: "secret",
+            message: "You were teleported by ancient magic!",
+            duration: 2000
+          });
+          break;
+        }
+        case "shop": {
+          setGameMessage({
+            type: "shop",
+            message: `Welcome to the ${event.shopId}! (Shop system coming soon)`,
+            duration: 3000
+          });
+          break;
+        }
       }
     },
-    [activeLevel.id, onDialogue, onLevelChange, router]
+    [activeLevel.id, onDialogue, onLevelChange, router, mapGrid]
   );
 
   const lastTransitionKey = useRef<string | null>(null);
@@ -411,16 +488,74 @@ export default function GameCanvas({
   }, [attemptMove, interactWithFacingTile, isInputDisabled]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={canvasSize.width}
-      height={canvasSize.height}
-      style={{
-        display: "block",
-        background: "#333",
-        margin: "20px auto",
-        imageRendering: "pixelated",
-      }}
-    />
+    <div className="relative">
+      {/* Game UI Overlay */}
+      <div className="absolute top-4 left-4 bg-black/70 text-white p-3 rounded-lg z-10 min-w-[200px]">
+        <div className="text-sm space-y-1">
+          <div className="flex justify-between">
+            <span>Health:</span>
+            <span>{playerHealth}/100</span>
+          </div>
+          <div className="w-full bg-gray-600 rounded-full h-2">
+            <div
+              className="bg-green-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${playerHealth}%` }}
+            />
+          </div>
+          {inventory.length > 0 && (
+            <div className="mt-2">
+              <div className="text-xs text-gray-300">Inventory:</div>
+              <div className="text-xs">
+                {inventory.slice(-3).map((item, index) => (
+                  <div key={index} className="text-yellow-400">• {item}</div>
+                ))}
+                {inventory.length > 3 && <div className="text-xs text-gray-400">...and {inventory.length - 3} more</div>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Game Canvas */}
+      <canvas
+        ref={canvasRef}
+        width={canvasSize.width}
+        height={canvasSize.height}
+        style={{
+          display: "block",
+          background: "#333",
+          margin: "20px auto",
+          imageRendering: "pixelated",
+        }}
+      />
+
+      {/* Game Messages */}
+      {gameMessage && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg z-10 max-w-md text-center">
+          <div className={`text-sm ${
+            gameMessage.type === "treasure" ? "text-yellow-400" :
+            gameMessage.type === "heal" ? "text-green-400" :
+            gameMessage.type === "puzzle" ? "text-blue-400" :
+            gameMessage.type === "secret" ? "text-purple-400" :
+            gameMessage.type === "shop" ? "text-orange-400" :
+            "text-white"
+          }`}>
+            {gameMessage.message}
+          </div>
+        </div>
+      )}
+
+      {/* Instructions */}
+      <div className="absolute top-4 right-4 bg-black/70 text-white p-3 rounded-lg z-10 text-xs max-w-[180px]">
+        <div className="space-y-1">
+          <div><strong>Movement:</strong> WASD or Arrow Keys</div>
+          <div><strong>Interact:</strong> Space or Enter</div>
+          <div className="text-gray-300 mt-2">
+            Walk into gates to travel between levels.
+            Face NPCs and interactive objects, then press interact.
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
